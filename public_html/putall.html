@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html lang="en">
+    <head>
+        <title>Put Multiple Student Records</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet"
+              href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+        <script
+        src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script
+        src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Add Multiple Records</h2>
+            <form id="StudentForm" method="post">
+                <div class="form-group">
+                    <span><label for="StId">Student ID:</label> <label id="StIdMsg">
+                        </label></span>
+                    <input type="text" class="form-control" name="StId" id="StId"
+                           placeholder="Enter Student ID" required>
+                </div>
+                <div class="form-group">
+                    <label for="StName">Student Name:</label>
+                    <input type="text" class="form-control" id="StName"
+                           placeholder="Enter Student Name" name="StName">
+                </div>
+                <div class="form-group">
+                    <label for="gen">Gender:</label>
+                    <input type="text" class="form-control" id="gen"
+                           placeholder="Enter Student Gender" name="StName">
+                </div>
+                <div class="form-group">
+                    <label for="StEmail">Email:</label>
+                    <input type="text" class="form-control" id="StEmail"
+                           placeholder="Enter Student Email" name="StEmail">
+                </div>
+                <div class="form-group">
+                    <label for="Stno">Mobile Number:</label>
+                    <input type="text" class="form-control" id="StNo"
+                           placeholder="Enter Student Mobile Number" name="StNo">
+                </div>
+                <input type="button" class="btn btn-primary" id="StAdd" value="Add"
+                       onclick="addStudent();">
+                
+                <input type="button" class="btn btn-primary" id="StSaveAll" value="SaveAll"
+                       onclick="saveAllStudents();">          
+  
+                
+            </form>
+        </div>
+        <script>
+            $("#empId").focus();
+            var jsonString = [];
+            var count=0;
+
+            function validateAndGetFormData() {
+
+                var StIdVar = $("#StId").val();  //jQuery syntax -> getting student id in this variable
+                if (StIdVar === "") {
+                    alert("Student ID Required Value");
+                    $("#StId").focus();
+                    return "";
+                }
+                var StNameVar = $("#StName").val();
+                if (StNameVar === "") {
+                    alert("Student Name is Required Value");
+                    $("#StName").focus();
+                    return "";
+                }
+                var genVar = $("#gen").val();
+                
+                var StEmailVar = $("#StEmail").val();
+                
+                var Stnovar = $("#StNo").val();
+                var jsonStrObj = {
+                    id: StIdVar,
+                    name: StNameVar,
+                    gender: genVar,
+                    email: StEmailVar,
+                    mobileno: Stnovar
+                };
+                return JSON.stringify(jsonStrObj);
+            }
+            // This method is used to create PUT_ALL Json request.
+            function createPUTallRequest(connToken, jsonObj, dbName, relName) {
+                var putRequest = "{\n"
+                        + "\"token\" : \""
+                        + connToken
+                        + "\","
+                        + "\"dbName\": \""
+                        + dbName
+                        + "\",\n" + "\"cmd\" : \"PUT_ALL\",\n"
+                        + "\"rel\" : \""
+                        + relName + "\","
+                        + "\"jsonStr\": \n"
+                        +jsonObj
+                        + "}";
+                
+                
+                
+                return putRequest;
+            }
+            
+            function executeCommand(reqString, dbBaseUrl, apiEndPointUrl) {
+                var url = dbBaseUrl + apiEndPointUrl;
+                var jsonObj;
+                $.post(url, reqString, function (result) {
+                    jsonObj = JSON.parse(result);
+                }).fail(function (result) {
+                    var dataJsonObj = result.responseText;
+                    jsonObj = JSON.parse(dataJsonObj);
+                });
+                return jsonObj;
+            }
+            function resetForm() {
+                $("#StId").val("")
+                $("#StName").val("");
+                $("#gen").val("");
+                $("#StEmail").val("");
+                $("#StNo").val("");
+                $("#StId").focus();    //put focus back to St id field
+                
+            }
+            
+            function addStudent(){
+                var jsonStr = validateAndGetFormData();
+                if (jsonStr === "") {
+                    return;
+                }
+                jsonString[count]=jsonStr;
+                count++;
+                resetForm();
+                alert(count+" "+jsonStr);
+                
+            }
+            function saveStudent() {
+                var jsonStr = validateAndGetFormData();
+                if (jsonStr === "") {
+                    return;
+                }
+                
+                
+                var putReqStr = createPUTRequest("90938939|-31949289339902450|90941126",
+                        jsonStr, "Student", "Student-Rel");
+                alert(putReqStr);
+                //in order to turn off the multithreading while execution othw it may distract the page completely and maybe break the page
+                jQuery.ajaxSetup({async: false});
+                var resultObj = executeCommand(putReqStr,
+                        "http://api.login2explore.com:5577", "/api/iml");
+                //after execution multithreading of ajax is turned on again
+                jQuery.ajaxSetup({async: true});
+                
+                alert(JSON.stringify(resultObj));
+        
+                resetForm();
+                count=0;
+                jsonStrings=[];
+            }
+            
+            function saveAllStudents()
+            {
+                if(count===0)
+                {    saveStudent();
+                    return;
+                }
+                alert("savingall");
+                var jsonStr="[]";
+                var i=0;
+                while(i<count)
+                {
+                    jsonStr+="{"+jsonStrings[i]+"}";
+                    
+                    if(i<count-1)
+                        jsonStr+=",";
+                    i++;
+                }
+                alert(jsonStr);
+                
+                var putReqStr = createPUTallRequest("90938939|-31949289339902450|90941126",
+                        jsonStr, "Student", "Student-Rel");
+                alert(putReqStr);
+                //in order to turn off the multithreading while execution othw it may distract the page completely and maybe break the page
+                jQuery.ajaxSetup({async: false});
+                var resultObj = executeCommandAtGivenBaseUrl(putReqStr,
+                        "http://api.login2explore.com:5577", "/api/iml");
+                //after execution multithreading of ajax is turned on again
+                jQuery.ajaxSetup({async: true});
+                
+                alert(JSON.stringify(resultObj));
+        
+                resetForm();
+                count=0;
+                jsonStrings=[];
+            }
+        </script>
+    </body>
+</html>
+

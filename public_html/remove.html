@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html lang="en">
+    <head>
+        <title>Remove Student Record</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet"
+              href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+        <script
+        src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="http://login2explore.com/jpdb/resources/js/0.0.3/jpdb-commons.js"></script>
+        <script
+        src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Remove Student Information</h2>
+            <form id="StudentForm" method="post">
+                <div class="form-group">
+                    <span><label for="StId">Student ID:</label> <label id="StIdMsg">
+                        </label></span>
+                    <input type="text" class="form-control" name="StId" id="StId"
+                           placeholder="Enter Student ID" required>
+                </div>
+                
+                <input type="button" class="btn btn-primary" id="StRem" value="Remove"
+                       onclick="removeStudent();">
+            </form>
+        </div>
+        
+        <script>
+            $("#StId").focus();
+            
+            function validateAndGetFormData() {
+
+                var StIdVar = $("#StId").val();  //jQuery syntax -> getting student id in this variable
+                if (StIdVar === "") {
+                    alert("Student ID Required Value");
+                    $("#StId").focus();
+                    return "";
+                }
+                return JSON.stringify(StIdVar);
+            }
+            
+            function executeCommand(reqString, dbBaseUrl, apiEndPointUrl) {
+                var url = dbBaseUrl + apiEndPointUrl;
+                var jsonObj;
+                //jQuery function for ajax call
+                $.post(url, reqString, function (result) {
+                    jsonObj = JSON.parse(result);
+                }).fail(function (result) {
+                    var dataJsonObj = result.responseText;
+                    jsonObj = JSON.parse(dataJsonObj);
+                });
+                return jsonObj;
+            }
+            
+            function resetForm() {
+                $("#StId").val("");
+            }
+            
+            function createRemoveRequest(connToken, Obj, dbName, relName) {
+                var remRequest = "{\n"
+                        + "\"token\" : \""
+                        + connToken
+                        + "\","
+                        + "\"dbName\": \""
+                        + dbName
+                        + "\",\n" + "\"cmd\" : \"REMOVE\",\n"
+                        + "\"rel\" : \""
+                        + relName + "\","
+                        + "\"record\": \n"
+                        +Obj+ ",\"jsonStr\":{}}";
+                
+                
+                
+                return remRequest;
+            }
+            
+            function saveStudent() {
+                var jsonStr = validateAndGetFormData();
+                if (jsonStr === "") {
+                    return;
+                }
+                var putReqStr = createRemoveRequest("90938939|-31949289339902450|90941126",
+                        jsonStr, "Student", "Student-Rel");
+                alert(putReqStr);
+                //in order to turn off the multithreading while execution othw it may distract the page completely and maybe break the page
+                jQuery.ajaxSetup({async: false});
+                var resultObj = executeCommand(putReqStr,
+                        "http://api.login2explore.com:5577", "/api/iml");
+                //after execution multithreading of ajax is turned on again
+                jQuery.ajaxSetup({async: true});
+                
+                alert(JSON.stringify(resultObj));
+        
+                resetForm();
+                count=0;
+                jsonStrings=[];
+            }
+
+</script>
+        
+        
+
+    </body>
+</html>
